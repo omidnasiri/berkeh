@@ -1,10 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import BerkehViewSet, CommentViewSet, LocationViewSet
+from ..views.drf import BerkehViewSet, CommentViewSet, LocationViewSet
 
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 router.register(r"berkehs", BerkehViewSet)
-router.register(r"comments", CommentViewSet)
+router.register(r"comments", CommentViewSet, basename="comments")
 router.register(r"locations", LocationViewSet)
 
 urlpatterns = [

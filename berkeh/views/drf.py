@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework import viewsets, filters, status
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from .models import Berkeh, Location, Comment
-from .serializers import BerkehSerializer, CommentSerializer, LocationSerializer
+from ..models import Berkeh, Location, Comment
+from ..serializers import BerkehSerializer, CommentSerializer, LocationSerializer
 
 
 class LocationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -15,10 +15,50 @@ class LocationViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["country", "province", "county", "city", "village", "district"]
 
 
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-    http_method_names = ["get", "post"]
+class CommentViewSet(viewsets.ViewSet):
+    @extend_schema(
+        description="Create a new comment.",
+        request=CommentSerializer,
+        responses={201: CommentSerializer},
+    )
+    def create(self, request):
+        """
+        Public API to create a comment.
+        """
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        description="Retrieve all comments related to a specific Berkeh.",
+        parameters=[
+            OpenApiParameter(
+                name="berkeh_id",
+                required=True,
+                description="ID of the Berkeh to retrieve comments for.",
+                type=int,
+            )
+        ],
+        responses={200: {}},
+    )
+    @action(detail=False, methods=["get"], url_path="by-berkeh")
+    def get_comments_by_berkeh(self, request):
+        """
+        API to retrieve all comments related to a specific Berkeh.
+        Requires `berkeh_id` as a query parameter.
+        """
+        berkeh_id = request.query_params.get("berkeh_id")
+        if not berkeh_id:
+            return Response(
+                {"error": "berkeh_id query parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        comments = Comment.objects.filter(berkeh_id=berkeh_id)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class BerkehViewSet(viewsets.ReadOnlyModelViewSet):
@@ -31,7 +71,6 @@ class BerkehViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ["name", "description"]
 
     @extend_schema(
-        tags=["berkehs"],
         description="Generate the next available Berkeh code based on location id.",
         parameters=[
             OpenApiParameter(

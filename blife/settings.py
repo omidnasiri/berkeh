@@ -53,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
 ]
 
 ROOT_URLCONF = "blife.urls"
@@ -125,7 +126,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -136,9 +139,37 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.csrf",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+
+try:
+    HTTP_REQUEST_TIMEOUT = int(os.getenv("HTTP_REQUEST_TIMEOUT", 10))
+except ValueError:
+    HTTP_REQUEST_TIMEOUT = 10
+    print(
+        f"Invalid HTTP_REQUEST_TIMEOUT value: {os.getenv('HTTP_REQUEST_TIMEOUT')}. Defaulting to 10 seconds."
+    )
+
 AWS_S3_REGION_NAME = "us-east-1"
 AWS_S3_ADDRESSING_STYLE = "path"
 AWS_ACCESS_KEY_ID = os.getenv("MINIO_ACCESS_KEY")
 AWS_S3_ENDPOINT_URL = os.getenv("MINIO_ENDPOINT")
 AWS_SECRET_ACCESS_KEY = os.getenv("MINIO_SECRET_KEY")
-AWS_STORAGE_BERKEH_PHOTOS_BUCKET_NAME = os.getenv("MINIO_BERKEH_PHOTOS_BUCKET")
+AWS_STORAGE_BERKEH_PHOTOS_BUCKET_NAME = os.getenv(
+    "MINIO_BERKEH_PHOTOS_BUCKET", "berkeh-photos"
+)

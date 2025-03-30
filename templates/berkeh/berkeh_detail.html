@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <a href="/berkehs" class="inline-flex items-center mb-6 text-blue-600 hover:text-blue-800 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        </svg>
+        بازگشت به لیست برکه‌ها
+    </a>
+    
+    <article class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ berkeh.name }}</h1>
+            <p class="text-gray-700 leading-relaxed">{{ berkeh.description }}</p>
+        </div>
+        
+        {% if berkeh.photos %}
+        <div class="border-t border-gray-200 px-6 py-4">
+            <h2 class="text-xl font-semibold mb-4">تصاویر</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for photo in berkeh.photos %}
+                <div class="rounded-lg overflow-hidden shadow-sm border">
+                    <img src="{{ photo.image }}" 
+                         alt="تصویر برکه" 
+                         class="w-full h-48 object-cover hover:scale-105 transition-transform duration-300 cursor-zoom-in"
+                         onclick="window.open(this.src, '_blank')">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="border-t border-gray-200 px-6 py-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">نظرات</h2>
+                <span class="text-sm text-gray-500">{{ comments|length }} نظر</span>
+            </div>
+            
+            <div id="comments-list" class="space-y-3 mb-6">
+                {% for comment in comments %}
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {{ comment.created_at|date:"Y/m/d" }}
+                    </div>
+                    <p class="text-gray-800">{{ comment.text }}</p>
+                </div>
+                {% empty %}
+                <div class="text-center py-4 text-gray-500">
+                    هنوز نظری ثبت نشده است
+                </div>
+                {% endfor %}
+            </div>
+            
+            <form hx-post="/api/comments" 
+                hx-target="#comments-list" 
+                hx-swap="beforeend"
+                hx-indicator="#comment-indicator"
+                hx-on::after-request="this.reset()"
+                class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                {% csrf_token %}
+                <input type="hidden" name="berkeh" value="{{ berkeh.id }}">
+                
+                <label for="comment-text" class="block text-sm font-medium text-gray-700 mb-1 text-right">نظر شما</label>
+                <textarea id="comment-text" name="text" 
+                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+                            rows="3" required></textarea>
+                
+                <div class="mt-3 flex justify-end items-center">
+                    <div id="comment-indicator" class="htmx-indicator flex items-center mr-3">
+                        <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        ارسال نظر
+                    </button>
+                </div>
+            </form>
+        </div>
+    </article>
+</div>
+{% endblock %}
